@@ -1,0 +1,28 @@
+body {
+    margin: 0;
+    overflow: hidden; /* スクロールバーを非表示にする */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* ビューポートの高さ全体を使用 */
+    background-color: #f0f0f0;
+    font-family: 'Arial', sans-serif;
+    color: #333;
+}
+
+#app-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer; /* マウスカーソルをポインターにする */
+    user-select: none; /* テキスト選択を無効にする */
+}
+
+#count-display {
+    font-size: 24em; /* カウント表示を大きくする */
+    font-weight: bold;
+    color: red; /* 青色の文字 */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
