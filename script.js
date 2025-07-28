@@ -45,7 +45,7 @@ function playAlarm() {
     oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // 周波数 (Hz)。今回は880Hzに設定
     oscillator.connect(audioContext.destination);
     oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.3); // 0.3秒後に停止（短くして安定性を高める）
+    oscillator.stop(audioContext.currentTime + 0.8); // 0.3秒後に停止（短くして安定性を高める）
 
     oscillator.onended = () => {
         oscillator = null;
