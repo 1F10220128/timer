@@ -1,82 +1,66 @@
-let count = 0;
+let internalCount = 0; // 内部で進むカウント (0から増加)
 const countDisplay = document.getElementById('count');
 const appContainer = document.getElementById('app-container');
 let timerId = null; // setIntervalのIDを保持するための変数 (nullの場合は停止中)
 
-// AudioContextとOscillatorの準備をグローバルで行う
-// iPhoneで音を鳴らすには、最初のユーザー操作時にAudioContextを初期化するのが確実
+// アラーム音用のAudioContextとOscillatorを作成
 let audioContext;
 let oscillator;
 
-// アラーム音を再生する関数
 function playAlarm() {
-    // AudioContextがまだ作成されていなければ、ここで作成する
-    // (ユーザーの最初のタップ後に呼び出されると、iPhoneでも音が出やすくなる)
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
-
-    // 既存のオシレーターがあれば停止して破棄
     if (oscillator) {
         oscillator.stop();
         oscillator.disconnect();
     }
-
-    // 新しいオシレーターを作成
     oscillator = audioContext.createOscillator();
-    oscillator.type = 'sine'; // 正弦波 (sine, square, sawtooth, triangle など)
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // 周波数 (Hz)。例: 440 (ラ), 880 (高いラ)
+    oscillator.type = 'sine'; // 正弦波
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // 440Hz
     oscillator.connect(audioContext.destination);
-
-    // 音を再生
     oscillator.start();
-    // 0.3秒後に音を停止 (短くしてiPhoneでの再生をより確実に)
     oscillator.stop(audioContext.currentTime + 0.3);
-
-    // 音が停止した後にオシレーターをリセット
     oscillator.onended = () => {
         oscillator = null;
     };
 }
 
-function updateCountDisplay() {
-    countDisplay.textContent = count;
+// 画面表示を更新する関数
+function updateDisplayCount() {
+    // 内部カウントが0の場合は100と表示
+    // 内部カウントが1～100の場合は、100から内部カウントを引いた値を表示
+    // 例: internalCountが1なら99、internalCountが90なら10、internalCountが99なら1
+    // internalCountが100の時に0にリセットされるため、この計算で問題なし
+    let displayValue = 100 - internalCount;
+    if (internalCount === 0) { // 初期状態または100でリセットされた直後
+        displayValue = 100;
+    }
+    countDisplay.textContent = displayValue;
 }
 
-function incrementCount() {
-    count++;
-    updateCountDisplay();
+function incrementInternalCount() {
+    internalCount++; // 内部カウントを1増やす
+    updateDisplayCount(); // 画面表示を更新
 
-    if (count === 90) {
+    if (internalCount === 90) {
         playAlarm(); // 90になったらアラームを鳴らす
-        console.log("90カウントです！アラーム音を鳴らします。");
+        console.log("内部カウントが90です！アラーム音を鳴らします。");
     }
 
-    if (count === 100) {
+    if (internalCount === 100) {
         stopCounting(); // 100になったらタイマーを停止
-        count = 0; // 0にリセット
-        updateCountDisplay(); // 表示を更新
-        console.log("100カウントに達したためリセットされ、停止しました。");
+        internalCount = 0; // 内部カウントを0にリセット
+        updateDisplayCount(); // 画面表示を更新 (100に戻る)
+        console.log("内部カウントが100に達したためリセットされ、停止しました。");
     }
 }
 
 function startCounting() {
     if (timerId === null) { // タイマーが停止中の場合のみ開始
-        count = 1; // 1からスタート
-        updateCountDisplay();
-        timerId = setInterval(incrementCount, 1000); // 1秒ごとにカウントアップを開始
-
-        // iPhoneでAudioContextを有効にするためのダミー再生 (初回タップ時のみ)
-        if (!audioContext) { // AudioContextがまだ作成されていなければ
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const buffer = audioContext.createBuffer(1, 1, 22050);
-            const source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContext.destination);
-            source.start(0);
-            source.stop(0.001); // 非常に短い音を再生してAudioContextをアクティブにする
-            console.log("AudioContextをアクティブにしました。");
-        }
+        internalCount = 1; // 内部カウントを1からスタート
+        updateDisplayCount(); // 画面表示を更新
+        timerId = setInterval(incrementInternalCount, 1000); // 1秒ごとにカウントアップを開始
     }
 }
 
@@ -89,7 +73,8 @@ function stopCounting() {
 
 // 画面のどこかをタップしたときのイベントリスナー
 appContainer.addEventListener('click', () => {
-    if (count === 0 && timerId === null) {
+    // 現在の状況が「カウントが0で停止中」かどうかで処理を分岐
+    if (internalCount === 0 && timerId === null) {
         // カウントが0で停止中の場合、カウントを開始する
         startCounting();
     } else {
@@ -100,4 +85,4 @@ appContainer.addEventListener('click', () => {
 });
 
 // 初期表示を設定
-updateCountDisplay();
+updateDisplayCount(); // アプリ起動時は100と表示されます
